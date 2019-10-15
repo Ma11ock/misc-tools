@@ -1,0 +1,9 @@
+#+AUTHOR: Ryan Jeffrey
+#+TITLE:  Misc. Tools
+
+Just a bunch of one-file tools written in C++. 
+To compile any of them, just
+
+#+BEGIN_SRC shell
+g++ -std=c++17 -Wall nameoffile -o whatyouwanttocallthebinary
+#+END_SRC
