@@ -29,7 +29,7 @@ union hexCoverter2d
 float h2f(std::string &hex)
 {
     hexCoverter2f hc2f;
-    std::istringstream hexVal(hex.c_str());
+    std::istringstream hexVal(hex);
     hexVal >> std::hex >> hc2f._uint;
 
     return hc2f._float;
@@ -38,7 +38,7 @@ float h2f(std::string &hex)
 double h2d(std::string &hex)
 {
     hexCoverter2d hc2d;
-    std::istringstream hexVal(hex.c_str());
+    std::istringstream hexVal(hex);
     hexVal >> std::hex >> hc2d._ulong;
 
     return hc2d._double;
@@ -105,7 +105,6 @@ Input floatOrDouble(std::string &input)
         break;
         
     default:
-        std::cout << "Neither\n";
         break;
     }
 
@@ -135,6 +134,9 @@ char change_case (char c)
         return std::toupper(c); 
 }
 
+/**
+
+ */ 
 int main(int argc, char **argv)
 {
     bool shouldQuit = false;
