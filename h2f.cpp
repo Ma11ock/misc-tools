@@ -113,14 +113,13 @@ Input floatOrDouble(std::string &input)
 
 Input parseInput(std::string &input)
 {
+    if(input == "QUIT")
+        return Input::Exit;
+        
     constexpr unsigned int minSize = 4u;
 
     if(input.size() <= minSize)
            return Input::BadInput;
-    
-    else if(input == "QUIT")
-        return Input::Exit;
-
 
     return floatOrDouble(input);
 }
