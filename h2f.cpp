@@ -118,7 +118,7 @@ Input parseInput(std::string &input)
     if(input.size() <= minSize)
            return Input::BadInput;
     
-    else if(input == "quit")
+    else if(input == "QUIT")
         return Input::Exit;
 
 
