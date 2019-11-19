@@ -244,23 +244,15 @@ floating-point representation.
      */
     ::Input IsFloatOrDouble(const std::string_view str)
     {
-        constexpr unsigned floatSize = 8;
-        constexpr unsigned doubleSize = 16;
-
-        // make sure that the size of the input is at least 4 chars.
-        if(str.size() < 4)
-        {
-            ::lastErrorMsg = "The input was not correctly sized.";
-            return ::Input::BadInput;
-        }
-
-        ::Input result = Input::BadInput;
+        constexpr std::size_t floatSize = sizeof(float) * 2;
+        constexpr std::size_t doubleSize = sizeof(double) * 2;
+        ::Input               result = Input::BadInput;
 
         auto check = [&]() -> bool
         {
             constexpr char beginHexAscii = 65; // A
             constexpr char endHexAscii   = 70; // F
-            
+
             for(char c : str)
             {
                 // return false if char is not alphanumeric and in the Hex char range.
@@ -353,7 +345,7 @@ int main(const int argc, const char *argv[])
                                return c;
                            });
         // getting rid of the leading "0x" if it exists
-        std::string_view newInput = ((input[0] == '0') && (input[1] == 'X'))
+        std::string newInput = ((input[0] == '0') && (input[1] == 'X'))
             ? input.substr(2, input.size()) : input;
         
         ::Input inputCode = ::GetInputType(newInput);
