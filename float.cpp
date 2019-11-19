@@ -256,26 +256,12 @@ floating-point representation.
 
         ::Input result = Input::BadInput;
 
-        auto check = [&](bool oversized = true) -> bool
+        auto check = [&]() -> bool
         {
             constexpr char beginHexAscii = 65; // A
             constexpr char endHexAscii   = 70; // F
             
-            if(oversized)
-            {
-                // make sure the first two chars are 0X
-                if(!(str[0] == '0')
-                   && ((str[1] == 'X')))
-                {
-                    return false;
-                }
-            }
-
-            // remove 0x from the string if present
-            std::string_view newStr = (oversized)
-                ? str.substr(2, str.size()) : str;
-
-            for(char c : newStr)
+            for(char c : str)
             {
                 // return false if char is not alphanumeric and in the Hex char range.
                 if(!std::isdigit(c))
@@ -294,30 +280,15 @@ floating-point representation.
 
         switch(str.size())
         {
-        case floatSize + 2: // begins with 0x
+        case 0 ... floatSize:
             if(check())
             {
                 result = ::Input::Float;
             }
             break;
 
-        case floatSize: // does not begin with 0x
-            if(check(false))
-            {
-                result = ::Input::Float;
-            }
-            break;
-
-        case doubleSize + 2: // begins with 0x
+        case (floatSize + 1) ... doubleSize:
             if(check())
-            {
-                result = ::Input::Double;
-            }
-            break;
-
-        case doubleSize: // does not begin with 0x
-            std::cout << "Here\n";
-            if(check(true))
             {
                 result = ::Input::Double;
             }
@@ -335,7 +306,7 @@ floating-point representation.
         ::Input input; // return value
 
         // quit
-        if(str[0] == 'q')
+        if(str[0] == 'Q')
         {
             input = ::Input::Exit;
         }
@@ -381,9 +352,12 @@ int main(const int argc, const char *argv[])
 
                                return c;
                            });
-        Input inputCode = GetInputType(input);
-  
-
+        // getting rid of the leading "0x" if it exists
+        std::string_view newInput = ((input[0] == '0') && (input[1] == 'X'))
+            ? input.substr(2, input.size()) : input;
+        
+        ::Input inputCode = ::GetInputType(newInput);
+        
         switch(inputCode)
         {
         case ::Input::Double: {
