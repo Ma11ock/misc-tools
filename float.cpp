@@ -92,7 +92,8 @@ floating-point representation.
             std::size_t       sizeofUintBuf = 0; // size of the buffer
             outputString      binBuffer;         // return value
 
-            // determine the size of uintBuf
+            /* determine the size of uintBuf. this is necessary so doubles and
+               floats are not confused. */
             switch(sizeof(_float))
             {
             case sizeof(double):
@@ -109,11 +110,11 @@ floating-point representation.
                 break;
             }
 
-            // 
+            // loop through each byte of the uint
             for(int j = sizeofUintBuf - 1; j >=  0; j--)
             {
                 char curByte = uintBuf[j];
-                // get each bit from _uint
+                // get each bit from _uint bytes
                 for(int i = (sizeof(curByte) * 8) - 1; i >= 0; i--)
                 {
                     char curChar;
@@ -233,24 +234,11 @@ floating-point representation.
     };
 
     // aliases
-    using Float =  IEEE754Float<float>;
+    using Float  = IEEE754Float<float>;
     using Double = IEEE754Float<double>;
 
     // TODO maybe do long double.
     
-    /*
-     * Converts char to uppercase if it is a letter.
-     */
-    char ToUpper(char c)
-    {
-        if(std::islower(c))
-        {
-            return std::tolower(c);
-        }
-
-        return c;
-    }
-
     /*
      * Determine if the input was a float or double. If it was neither, return BadInput.
      */
@@ -382,8 +370,19 @@ int main(const int argc, const char *argv[])
     
     while(cont && (std::cin >> input))
     {
+  
+        std::transform(input.begin(), input.end(), input.begin(),
+                       [](char c) -> char
+                           {
+                               if(std::islower(c))
+                               {
+                                   return std::toupper(c);
+                               }
+
+                               return c;
+                           });
         Input inputCode = GetInputType(input);
-        std::transform(input.begin(), input.end(), input.begin(), ::ToUpper);
+  
 
         switch(inputCode)
         {
