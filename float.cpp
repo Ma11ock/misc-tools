@@ -1,10 +1,11 @@
-#include <iostream>
-#include <iomanip>
-#include <string>
-#include <algorithm>
-#include <string_view>
-#include <cctype>
-#include <cstring>
+#include <iostream>    // cout, cerr, cin, endl
+#include <iomanip>     // setw, setfill, etc
+#include <string>      // string
+#include <algorithm>   // transform
+#include <string_view> // string_view
+#include <cstring>     // strncpy
+#include <cmath>       // float functions (isnormal, isnan, isfinite, etc)
+#include <stdexcept>   // for stoi's error output
 
 namespace
 {
@@ -33,18 +34,17 @@ floating-point representation.
         Float,
         Double,
 
-        Mode
-    };
-
-    /*
-     * The current mode, or way to interpret input.
-     */
-    enum class Mode
-    {
         Help,
-        
+        Flag,
     };
 
+    struct
+    {
+        unsigned precision    = 2;
+        bool     simpleOutput = false;
+        bool     printHelp    = false;
+    } static currentSettings;
+    
     /*
      * Representation of an IEEE 754 float, 32 or 64 bit.
      */
@@ -242,7 +242,7 @@ floating-point representation.
     /*
      * Determine if the input was a float or double. If it was neither, return BadInput.
      */
-    ::Input IsFloatOrDouble(const std::string_view str)
+    static ::Input IsFloatOrDouble(const std::string_view str)
     {
         constexpr std::size_t floatSize = sizeof(float) * 2;
         constexpr std::size_t doubleSize = sizeof(double) * 2;
@@ -290,12 +290,66 @@ floating-point representation.
         return result;
     }
 
+    /* Interprets the user's flags, and sets the mode accordingly.
+       Returns false if it could not set the mode, true otherwise. */
+    static bool InterpretMode(const std::string_view input)
+    {
+        bool success = true;
+        
+        switch(input[1])
+        {
+        case 'S':
+            ::currentSettings.simpleOutput = true;
+            break;
+
+        case 'N':
+            ::currentSettings.simpleOutput = false;
+            break;
+            
+        case 'H':
+            ::currentSettings.printHelp = true;
+            break;
+            
+        case 'P': {
+            if(input.size() < 3)
+            {
+                ::lastErrorMsg = "Precision was not set with value.";
+                success = false;
+                break;
+            }
+
+            // get the rest of the input, and try to convert it to a string
+            std::string_view numString = input.substr(2, input.size());
+
+            try
+            {
+                ::currentSettings.precision =  std::stoi(numString.data());
+            }
+            catch(const std::invalid_argument &e)
+            {
+                ::lastErrorMsg = "While trying to set the float precision: ";
+                ::lastErrorMsg += e.what();
+            }
+        }
+            break;
+
+        default:
+            ::lastErrorMsg = "Unrecognized input: ";
+            ::lastErrorMsg += input.data();
+            success = false;
+            break;
+        }
+
+        return success;
+    }
+
+
     /*
      * Gets program's interpretaion of the input that the user has put in.
      */
-    ::Input GetInputType(const std::string_view str)
+    static ::Input GetInputType(const std::string_view str)
     {
-        ::Input input; // return value
+        ::Input input = ::Input::BadInput; // return value
 
         // quit
         if(str[0] == 'Q')
@@ -305,8 +359,14 @@ floating-point representation.
         // flag
         else if(str[0] == '-')
         {
-//            char firstChar = str[0];
-            input = ::Input::Mode;
+            if(str.size() < 2)
+            {
+                ::lastErrorMsg = "Not enough arguments for a flag.";
+            }
+            else if(InterpretMode(str))
+            {
+                input = ::Input::Flag;
+            }
         }
         // a float or double
         else
@@ -316,7 +376,7 @@ floating-point representation.
 
         return input;
     }
-
+    
 }
 
 /*
@@ -354,19 +414,36 @@ int main(const int argc, const char *argv[])
         {
         case ::Input::Double: {
             ::Double d = ::Double::HexStrToIEEEFloat(input);
-            std::cout << d.GetIEEEFloat() << '\n';
-            d.PrintFormattedOutput();
+            std::cout << std::setprecision(::currentSettings.precision)
+                      << d.GetIEEEFloat() << '\n';
+            // print the fancy output if the user has not turned it off
+            if(!::currentSettings.simpleOutput)
+            {
+                d.PrintFormattedOutput();
+            }
             break;
 
         }
         case ::Input::Float: {
             ::Float f = ::Float::HexStrToIEEEFloat(input);
-            std::cout << f.GetIEEEFloat() << '\n';
-            f.PrintFormattedOutput();
+            std::cout << std::setprecision(::currentSettings.precision)
+                      << f.GetIEEEFloat() << '\n';
+
+            if(!::currentSettings.simpleOutput)
+            {
+                f.PrintFormattedOutput();
+            }
             break;
         }
+
+        case ::Input::Flag:
+            // do nothing, handled elsewhere.
+            break;
             
-        case ::Input::Mode:
+        case ::Input::Help:
+            // print the helpstr and exit.
+            cont = false;
+            std::cout << ::helpStr << '\n';
             break;
 
         case ::Input::BadInput:
