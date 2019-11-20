@@ -6,6 +6,16 @@
 #include <cstring>     // strncpy
 #include <cmath>       // float functions (isnormal, isnan, isfinite, etc)
 #include <stdexcept>   // for stoi's error output
+#include <cfloat>      // FLT_HAS_SUBNORM
+
+
+#ifndef __STDC_IEC_559__
+#error "IEEE 754 not implemented"
+#endif
+
+#if FLT_HAS_SUBNORM != 1
+#warning "Float does not have subnormal numbers."
+#endif
 
 namespace
 {
@@ -54,6 +64,7 @@ Return values:
         Flag,
     };
 
+    /* Struct that keeps track of the global settings such as precision. */
     struct
     {
         unsigned precision    = 2;
@@ -178,6 +189,33 @@ Return values:
             return *this;
         }
 
+        const char *GetFloatClassification()
+        {
+            switch (std::fpclassify(_float))
+            {
+            case FP_INFINITE:
+                return "Infinity";
+            case FP_NAN:
+                return "NaN";
+            case FP_ZERO:
+                return "Zero";
+            case FP_SUBNORMAL:
+                return "Subnormal";
+            case FP_NORMAL:
+                return "Normal";
+            }
+
+            return "";
+        }
+
+        const char *GetFloatSign()
+        {
+            if (std::signbit(_float))
+                return "Negative";
+            else
+                return "Positive";
+        }
+        
         void PrintFormattedOutput()
         {
             outputString      os = getBinary();
@@ -215,12 +253,16 @@ Return values:
 
             printEnds();
             
-            std::cout << columnStr << signStr << columnStr << std::setfill(' ')  << std::setw(exponentSize) << expStr << columnStr
-                      << std::setw(os.strSize - (exponentSize + 1)) << "Mantissa" << columnStr
+            std::cout << columnStr << signStr << columnStr << std::setfill(' ')
+                      << std::setw(exponentSize) << expStr << columnStr
+                      << std::setw(os.strSize - (exponentSize + 1))
+                      << "Mantissa" << columnStr
                       << std::endl;
             
             std::cout << columnStr << std::setfill(' ')
-                      << std::setw((sizeof(signStr) - 1) + (sizeof(columnStr) - 1) - sizeof(columnStr) + 1)
+                      << std::setw((sizeof(signStr) - 1)
+                                   + (sizeof(columnStr) - 1)
+                                   - sizeof(columnStr) + 1)
                       << os[0] << columnStr << std::flush;
 
             // print the string's exponent [1, exponentsize]
@@ -238,6 +280,11 @@ Return values:
 
             std::cout << columnStr << std::endl;
             printEnds();
+
+
+            std::cout << "Class: " << GetFloatSign()
+                      << ' ' << GetFloatClassification()
+                      << '\n';
         }
 
         T GetIEEEFloat()
