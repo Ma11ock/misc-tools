@@ -13,8 +13,24 @@ namespace
      * Help string.
      */
     const static std::string helpStr = R"HELP(Usage: float <flags>
-Takes in data as a hexadecimal value (from standard in) and outputs its 
-floating-point representation. 
+Takes in data as a hexadecimal value (from standard in) and outputs its floating-point representation. 
+
+Flags:
+    Flags can be set as an argument or in stdin. To call a flag:
+    -<flag character><flag arguments> (no spaces).
+    
+Flags include:
+    -h                                    Help
+    -p<number>                            Floating point precison.
+    -s                                    Simple output (no table).
+    -n                                    Normal out (defaults).
+
+
+Return values:
+    -2 if an unrecognized command line argument was found.
+    -1 if an error occurred while reading from stdin.
+     0 on success.
+    >0 The number of inputs that were not recognized. 
 )HELP";
 
     /*
@@ -298,18 +314,22 @@ floating-point representation.
         
         switch(input[1])
         {
+        case 's':
         case 'S':
             ::currentSettings.simpleOutput = true;
             break;
 
+        case 'n':
         case 'N':
             ::currentSettings.simpleOutput = false;
             break;
-            
+
+        case 'h':
         case 'H':
             ::currentSettings.printHelp = true;
             break;
-            
+
+        case 'p':
         case 'P': {
             if(input.size() < 3)
             {
@@ -389,8 +409,30 @@ int main(const int argc, const char *argv[])
                                          occurs). number of user inputs that
                                          could not be converted into floats.  */                             
     std::string input;
-    
-    
+
+
+    // interpret command line arguments
+    if(argc != 1)
+    {
+        for(int i = 1; i < argc; i++)
+        {
+            if(!::InterpretMode(argv[i]))
+            {
+                std::cerr << "Error: " << argv[i] << " is not recognized.\n";
+                numFailedInputs = -2;
+                cont = false;
+            }
+            // exit immediately if help was called
+            else if(::currentSettings.printHelp)
+            {
+                cont = false;
+                std::cout << ::helpStr << '\n';
+                break;
+            }
+        }
+    }
+
+    // main loop
     while(cont && (std::cin >> input))
     {
   
